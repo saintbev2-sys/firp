@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Field Inspector Route Pro — Built by a vendor, for vendors.</title>
+<meta name="description" content="The route optimizer, earnings tracker, and WO dashboard built by an active Safeguard vendor. Stop juggling spreadsheets. Run your day from one screen." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --bg-2: #0f1825;
+    --panel: #142033;
+    --panel-2: #1a2942;
+    --border: #1f3050;
+    --green: #4ade80;
+    --green-dim: #1c3a28;
+    --amber: #fbbf24;
+    --red: #ef4444;
+    --blue: #60a5fa;
+    --purple: #c084fc;
+    --text: #e6edf3;
+    --text-dim: #8b9bb4;
+    --text-faint: #506680;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', -apple-system, sans-serif;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Grid + scanline atmosphere */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74, 222, 128, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74, 222, 128, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at top, rgba(74, 222, 128, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Top status bar */
+  .statusbar {
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 0;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  .statusbar .container { display: flex; justify-content: space-between; align-items: center; }
+  .statusbar .blink { color: var(--green); animation: blink 1.5s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* HERO */
+  .hero {
+    padding: 80px 0 60px;
+    position: relative;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--green-dim);
+    background: rgba(74, 222, 128, 0.05);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    margin-bottom: 28px;
+  }
+  .badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: clamp(40px, 7vw, 76px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  h1 .accent { color: var(--green); }
+  h1 .strike { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 3px; }
+
+  .lede {
+    font-size: clamp(17px, 2vw, 20px);
+    color: var(--text-dim);
+    max-width: 620px;
+    margin-bottom: 40px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 24px rgba(74, 222, 128, 0.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(74, 222, 128, 0.6); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+
+  .seats-left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--amber);
+    letter-spacing: 0.05em;
+  }
+
+  /* Founder strip */
+  .founder {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .founder-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--bg);
+  }
+  .founder strong { color: var(--text); }
+
+  /* SECTION */
+  section { padding: 80px 0; position: relative; }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  h2 .accent { color: var(--green); }
+  .section-lede { color: var(--text-dim); font-size: 17px; max-width: 600px; margin-bottom: 48px; }
+
+  /* PROBLEMS */
+  .problems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .problem {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 28px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .problem::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--red);
+  }
+  .problem h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--red);
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+  .problem p { color: var(--text-dim); font-size: 15px; }
+
+  /* FEATURES with screenshots */
+  .features {
+    display: grid;
+    gap: 80px;
+    margin-top: 48px;
+  }
+  .feature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .feature:nth-child(even) .feature-text { order: 2; }
+  @media (max-width: 800px) {
+    .feature { grid-template-columns: 1fr; gap: 32px; }
+    .feature:nth-child(even) .feature-text { order: 0; }
+  }
+  .feature-num {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .feature h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .feature p { color: var(--text-dim); font-size: 16px; margin-bottom: 12px; }
+  .feature ul { list-style: none; padding: 0; }
+  .feature li {
+    padding-left: 24px;
+    position: relative;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+  .feature li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Phone mockup */
+  .phone-frame {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 14px 10px;
+    max-width: 320px;
+    margin: 0 auto;
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(74, 222, 128, 0.1),
+      0 0 40px rgba(74, 222, 128, 0.08);
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+  }
+  .phone-screen {
+    background: #0d1622;
+    border-radius: 18px;
+    padding: 26px 14px 14px;
+    overflow: hidden;
+  }
+
+  /* App mockup styles */
+  .app-header {
+    background: linear-gradient(180deg, #0e1a2a 0%, #112238 100%);
+    border-radius: 10px;
+    padding: 14px;
+    border: 1px solid #1a2a45;
+  }
+  .app-title-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .app-title-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+  }
+  .app-title-big {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+    margin-top: 2px;
+  }
+  .app-name { font-size: 10px; color: var(--green); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+  .surveys-num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 800; color: var(--green); line-height: 1; }
+  .surveys-label { font-size: 9px; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; text-align: right; margin-top: 2px; }
+
+  .app-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .stat {
+    border: 1px solid;
+    border-radius: 6px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .stat.earned { border-color: rgba(74, 222, 128, 0.4); background: rgba(74, 222, 128, 0.06); }
+  .stat.pending { border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.06); }
+  .stat.done { border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.06); }
+  .stat .lbl { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 0.1em; }
+  .stat .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; margin-top: 4px; }
+  .stat.earned .val { color: var(--green); }
+  .stat.pending .val { color: var(--blue); }
+  .stat.done .val { color: var(--amber); }
+
+  .app-tabs { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #1a2a45; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text-faint); letter-spacing: 0.05em; flex-wrap: wrap; }
+
+  .wo-card {
+    margin-top: 10px;
+    background: linear-gradient(180deg, #0e1a2a 0%, #112238 100%);
+    border-radius: 10px;
+    border: 1px solid #1a2a45;
+    border-left: 3px solid var(--blue);
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .wo-tag-row { display: flex; justify-content: space-between; align-items: center; }
+  .wo-carrier {
+    font-size: 9px;
+    padding: 3px 7px;
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    border-radius: 4px;
+  }
+  .wo-priority { font-size: 8px; color: var(--red); display: flex; align-items: center; gap: 4px; }
+  .wo-priority .dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; }
+  .wo-addr { font-size: 11px; font-weight: 700; margin-top: 6px; line-height: 1.3; }
+  .wo-num { font-size: 9px; color: var(--text-faint); margin-top: 4px; }
+  .wo-meta { font-size: 9px; color: var(--text-dim); margin-top: 4px; }
+  .wo-pay { font-size: 14px; font-weight: 800; margin-top: 6px; }
+
+  /* AUDIENCE */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 32px;
+  }
+  .audience-card {
+    padding: 24px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 8px;
+  }
+  .audience-card .check {
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .audience-card p { color: var(--text); font-size: 15px; }
+
+  /* PRICING TEASE */
+  .pricing {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 48px;
+    text-align: center;
+    margin-top: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pricing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(74, 222, 128, 0.08) 0%, transparent 60%);
+  }
+  .pricing > * { position: relative; }
+  .pricing-tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .tier {
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    border-radius: 8px;
+    padding: 24px 18px;
+  }
+  .tier.highlighted {
+    border-color: var(--green);
+    background: rgba(74, 222, 128, 0.05);
+  }
+  .tier-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .tier.highlighted .tier-name { color: var(--green); }
+  .tier-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .tier-period { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+  .tier-note { font-size: 12px; color: var(--text-faint); margin-top: 10px; }
+
+  /* FINAL CTA */
+  .final-cta {
+    padding: 80px 24px;
+    text-align: center;
+    background: linear-gradient(180deg, transparent 0%, rgba(74, 222, 128, 0.05) 100%);
+    border-top: 1px solid var(--border);
+  }
+  .final-cta h2 { margin-bottom: 16px; }
+  .final-cta p { color: var(--text-dim); font-size: 18px; max-width: 540px; margin: 0 auto 32px; }
+
+  /* SIGNUP FORM */
+  .signup {
+    display: flex;
+    gap: 8px;
+    max-width: 480px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  .signup input {
+    flex: 1;
+    min-width: 220px;
+    padding: 16px 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .signup input:focus { border-color: var(--green); }
+  .signup input::placeholder { color: var(--text-faint); }
+
+  .form-msg {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--green);
+    min-height: 20px;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  footer .container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+  /* Reveal animation on scroll */
+  .reveal { opacity: 0; transform: translateY(20px); transition: all 0.7s ease; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Hero animations */
+  .hero > * { animation: slideUp 0.7s ease both; }
+  .hero .badge { animation-delay: 0s; }
+  .hero h1 { animation-delay: 0.1s; }
+  .hero .lede { animation-delay: 0.2s; }
+  .hero .cta-row { animation-delay: 0.3s; }
+  .hero .founder { animation-delay: 0.4s; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP STATUS BAR -->
+<div class="statusbar">
+  <div class="container">
+    <span>FIRP // FIELD INSPECTOR ROUTE PRO</span>
+    <span><span class="blink">●</span> BETA OPEN</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <div class="badge"><span class="dot"></span> Built by an active field vendor</div>
+    <h1>Stop running your route from <span class="strike">spreadsheets.</span> <span class="accent">Run it from one screen.</span></h1>
+    <p class="lede">FIRP is the route optimizer, earnings tracker, and WO dashboard built by a vendor who got tired of losing money on bad routes and missed orders. No more juggling apps. No more guessing.</p>
+    <div class="cta-row">
+      <a href="#signup" class="btn btn-primary">→ Get Early Access</a>
+      <a href="#features" class="btn btn-ghost">See How It Works</a>
+    </div>
+    <div class="seats-left">▸ First 10 beta vendors get Pro free, for life.</div>
+    <div class="founder">
+      <div class="founder-avatar">FR</div>
+      <div>Built by an <strong>active field vendor</strong> who got tired of losing money on bad routes and missed orders.</div>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEMS -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// THE REAL PROBLEMS</div>
+    <h2 class="reveal">You already know these. <span class="accent">You feel them every day.</span></h2>
+
+    <div class="problems" style="margin-top: 40px;">
+      <div class="problem reveal">
+        <h3>▸ Wasted miles</h3>
+        <p>Your route is whatever order the WOs were assigned. You're driving across town twice in the same day for no reason.</p>
+      </div>
+      <div class="problem reveal">
+        <h3>▸ Lost earnings</h3>
+        <p>You finish a week and have no idea what you actually made until the check hits. Bid-backs and trip charges fall through the cracks.</p>
+      </div>
+      <div class="problem reveal">
+        <h3>▸ Missed orders</h3>
+        <p>Late updates, no-contact rules, door hangers — one missed step and the WO bounces. That's your money walking away.</p>
+      </div>
+      <div class="problem reveal">
+        <h3>▸ App overload</h3>
+        <p>Vendor portal. Google Maps. Notes app. Calculator. Spreadsheet. You're switching screens 50 times a day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES (with screenshot mockups) -->
+<section id="features" style="background: var(--bg-2);">
+  <div class="container">
+    <div class="section-label reveal">// HOW IT WORKS</div>
+    <h2 class="reveal">One screen. <span class="accent">Your entire day.</span></h2>
+    <p class="section-lede reveal">Open the app. See every WO, sorted by priority. Optimize your route in one tap. Track earnings in real time. Mark jobs done. Move on.</p>
+
+    <div class="features">
+      <!-- Feature 1 -->
+      <div class="feature reveal">
+        <div class="feature-text">
+          <div class="feature-num">01 // DASHBOARD</div>
+          <h3>Every WO. One view. Priority-coded.</h3>
+          <p>HIGH / MED / LOW color bars on every job. Carrier tags (Allstate, Farmers, FI). Job type badges (Exterior Only, No Contact, Door Hanger). At a glance, you know what's urgent.</p>
+          <ul>
+            <li>Carrier-tagged WOs</li>
+            <li>Priority sorting</li>
+            <li>Live earnings counter</li>
+            <li>One-tap Map · Call · Text · Start · Done</li>
+          </ul>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="app-header">
+              <div class="app-title-row">
+                <div>
+                  <div class="app-title-mono">FIELD INSPECTOR</div>
+                  <div class="app-title-big">ROUTE PRO</div>
+                  <div class="app-name">✏ Your Name</div>
+                </div>
+                <div>
+                  <div class="surveys-num">6</div>
+                  <div class="surveys-label">SURVEYS</div>
+                </div>
+              </div>
+              <div class="app-stats">
+                <div class="stat earned"><div class="lbl">EARNED</div><div class="val">$0</div></div>
+                <div class="stat pending"><div class="lbl">PENDING</div><div class="val">$87</div></div>
+                <div class="stat done"><div class="lbl">DONE</div><div class="val">0/6</div></div>
+              </div>
+              <div class="app-tabs">
+                <span>🗺 ROUTE</span><span>📱 TEXTS</span><span>+ ADD</span><span>📡 MAP</span><span>📊 STATS</span>
+              </div>
+            </div>
+            <div class="wo-card">
+              <div class="wo-tag-row">
+                <div class="wo-carrier">Allstate</div>
+                <div class="wo-priority"><span class="dot"></span> HIGH</div>
+              </div>
+              <div class="wo-addr">#01 — 1234 W 4700 S, Taylorsville UT</div>
+              <div class="wo-num">ALL-2024-0091 · John Smith</div>
+              <div class="wo-meta">🏠 EXTERIOR ONLY</div>
+              <div class="wo-pay">$14.50</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature reveal">
+        <div class="feature-text">
+          <div class="feature-num">02 // ROUTE OPTIMIZER</div>
+          <h3>One tap. Best route. Real drive times.</h3>
+          <p>Hit OPTIMIZE. FIRP pulls real GPS data and reorders your day so you stop crossing the same intersection 5 times. Each stop shows the drive time to the next.</p>
+          <ul>
+            <li>One-tap optimization</li>
+            <li>Real GPS distance + drive time</li>
+            <li>Full route map view</li>
+            <li>Re-orders on the fly when WOs change</li>
+          </ul>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <div style="flex: 1; padding: 18px 10px; border: 1px solid var(--green); background: rgba(74,222,128,0.08); border-radius: 8px; text-align: center;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px;">⚡</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green); margin-top: 4px; letter-spacing: 0.1em;">OPTIMIZE</div>
+              </div>
+              <div style="flex: 1; padding: 18px 10px; border: 1px solid var(--blue); background: rgba(96,165,250,0.08); border-radius: 8px; text-align: center;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px;">🧭</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue); margin-top: 4px; letter-spacing: 0.1em;">FULL ROUTE</div>
+              </div>
+            </div>
+            <div class="wo-card" style="border-left-color: var(--amber);">
+              <div class="wo-tag-row">
+                <div class="wo-carrier" style="border-color: var(--amber); color: var(--amber);">Farmers</div>
+                <div class="wo-priority" style="color: var(--amber);"><span class="dot" style="background: var(--amber);"></span> MED</div>
+              </div>
+              <div class="wo-addr">#02 — 88 W South Temple, SLC UT</div>
+              <div class="wo-num">FRM-2024-0342 · Maria Lopez</div>
+              <div class="wo-pay">$14.50</div>
+              <div style="margin-top: 8px; padding: 4px 8px; background: rgba(96,165,250,0.1); border-radius: 4px; display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--blue);">🚗 29 min · 14.5 mi</div>
+            </div>
+            <div class="wo-card" style="border-left-color: var(--purple); margin-top: 8px;">
+              <div class="wo-tag-row">
+                <div class="wo-carrier" style="border-color: var(--purple); color: var(--purple);">FI — No Contact</div>
+                <div class="wo-priority" style="color: var(--amber);"><span class="dot" style="background: var(--amber);"></span> MED</div>
+              </div>
+              <div class="wo-addr">#03 — 3401 S 900 W, SSL UT</div>
+              <div class="wo-pay">$14.50</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature reveal">
+        <div class="feature-text">
+          <div class="feature-num">03 // EARNINGS</div>
+          <h3>Know what you made. Today. This week. This month.</h3>
+          <p>Every WO has a pay amount. FIRP tracks Earned vs Pending in real time. No more end-of-month "what did I actually clear" panic.</p>
+          <ul>
+            <li>Live earnings counter</li>
+            <li>Mixed rates per carrier</li>
+            <li>Trip charge / bid-back ready</li>
+            <li>Export-ready (CSV, coming soon)</li>
+          </ul>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="app-header">
+              <div class="app-title-mono">WEEK OF MAY 12</div>
+              <div style="margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="stat earned" style="padding: 16px 10px;">
+                  <div class="lbl">TOTAL EARNED</div>
+                  <div class="val" style="font-size: 22px;">$362</div>
+                </div>
+                <div class="stat pending" style="padding: 16px 10px;">
+                  <div class="lbl">PENDING</div>
+                  <div class="val" style="font-size: 22px;">$148</div>
+                </div>
+              </div>
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #1a2a45; font-family: 'JetBrains Mono', monospace; font-size: 10px;">
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; color: var(--text-dim);"><span>Allstate</span><span style="color: var(--green);">$87.00</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; color: var(--text-dim);"><span>Farmers</span><span style="color: var(--green);">$145.00</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; color: var(--text-dim);"><span>FI — Inspections</span><span style="color: var(--green);">$130.00</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; color: var(--text-faint);"><span>Trip charges</span><span>+ $25.00</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO IT'S FOR -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// WHO IT'S FOR</div>
+    <h2 class="reveal">Property preservation vendors. <span class="accent">Period.</span></h2>
+    <p class="section-lede reveal">FIRP is built around real WO types: Safeguard, MCS, Cyprexx, FI orders, insurance carrier inspections (Allstate, Farmers, etc.). Door hangers, exterior-only, no-contact protocols — it speaks your language.</p>
+    <div class="audience-grid">
+      <div class="audience-card reveal">
+        <div class="check">[✓] SAFEGUARD VENDORS</div>
+        <p>Run your full route from one dashboard. Built by someone who downloads from the same portal you do.</p>
+      </div>
+      <div class="audience-card reveal">
+        <div class="check">[✓] INSURANCE INSPECTORS</div>
+        <p>Allstate, Farmers, USAA — carrier-tagged WOs with priority levels and per-job pay tracking.</p>
+      </div>
+      <div class="audience-card reveal">
+        <div class="check">[✓] MULTI-CONTRACT VENDORS</div>
+        <p>Running MCS + Cyprexx + Safeguard at once? Mixed rates and contractor IDs all in one place.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section style="background: var(--bg-2);">
+  <div class="container">
+    <div class="section-label reveal">// PRICING</div>
+    <h2 class="reveal">Fair price. <span class="accent">Built for solo operators.</span></h2>
+
+    <div class="pricing reveal">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase;">BETA OFFER</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; margin-top: 10px;">First 10 vendors = Pro free forever</div>
+      <div class="pricing-tiers">
+        <div class="tier">
+          <div class="tier-name">Free</div>
+          <div class="tier-price">$0</div>
+          <div class="tier-period">forever</div>
+          <div class="tier-note">Up to 10 WOs/month</div>
+        </div>
+        <div class="tier highlighted">
+          <div class="tier-name">Pro</div>
+          <div class="tier-price">$19</div>
+          <div class="tier-period">per month</div>
+          <div class="tier-note">Unlimited WOs · route optimization · earnings reports</div>
+        </div>
+        <div class="tier">
+          <div class="tier-name">Team</div>
+          <div class="tier-price">$49</div>
+          <div class="tier-period">per month</div>
+          <div class="tier-note">Multiple vendors · sub-contractor tracking</div>
+        </div>
+      </div>
+      <div style="font-size: 14px; color: var(--text-dim); margin-top: 20px;">No card required for beta. We won't charge anyone in the first 30 days.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="signup" class="final-cta">
+  <div class="container">
+    <h2>You already do the work. <span class="accent">Get paid better for it.</span></h2>
+    <p>Drop your email. We'll send you access as soon as beta opens. First 10 vendors lock in Pro free for life.</p>
+
+    <form class="signup" id="signupForm" action="https://formspree.io/f/xykorlpq" method="POST">
+      <input type="email" id="email" name="email" placeholder="your@email.com" required />
+      <input type="hidden" name="source" value="firp-landing" />
+      <button type="submit" class="btn btn-primary">→ Join Beta</button>
+    </form>
+    <div class="form-msg" id="formMsg"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div>FIRP // © 2026</div>
+    <div>BUILT FOR THE FIELD</div>
+  </div>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Signup form — Formspree integration
+  const form = document.getElementById('signupForm');
+  const msg = document.getElementById('formMsg');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const emailInput = document.getElementById('email');
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    msg.style.color = 'var(--text-dim)';
+    msg.textContent = '▸ Sending...';
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (response.ok) {
+        msg.style.color = 'var(--green)';
+        msg.textContent = `▸ You're in. We'll email ${email} when access opens.`;
+        form.reset();
+      } else {
+        msg.style.color = 'var(--red)';
+        msg.textContent = '▸ Something went wrong. Try again or DM @saintbev.';
+      }
+    } catch (err) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = '▸ Network error. Try again.';
+    }
+  });
+</script>
+
+</body>
+</html>
